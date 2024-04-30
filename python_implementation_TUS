@@ -1,0 +1,59 @@
+import os
+import requests
+
+# Vimeo API access token
+access_token = '{TOKEN}'  # Replace with your actual access token
+
+# Get the filename (without the extension, as we'll use it as the video title in our library)
+filename_without_extension = os.path.splitext('my_file.mp4')[0]
+
+# Step 1: Create the video
+# Specify the required headers for authentication and content negotiation
+headers = {
+    'Authorization': f'Bearer {access_token}',
+    'Content-Type': 'application/json',
+    'Accept': 'application/vnd.vimeo.*+json;version=3.4'
+}
+# Define parameters for the video upload request, including the approach and size
+params = {
+    'upload': {
+        'approach': 'tus',  # Utilize the TUS protocol for resumable uploads
+        'size': os.path.getsize('my_file.mp4')  # Determine the size of the video file
+    },
+    'name': filename_without_extension  # Set the video title to the filename without extension
+}
+response = requests.post('https://api.vimeo.com/me/videos', headers=headers, json=params)
+video_data = response.json()
+upload_link = video_data.get('upload', {}).get('upload_link')
+
+# For optimal performance, it's recommended to consider the chunk size when using a TUS library.
+# Set the chunk size to 256 MB for efficient data transmission
+chunk_size = 256 * 1024 * 1024  
+
+# Step 2: Upload the video file
+with open('my_file.mp4', 'rb') as f:
+    headers = {
+        'Tus-Resumable': '1.0.0',
+        'Upload-Offset': '0',
+        'Content-Type': 'application/offset+octet-stream'
+    }
+    while True:
+        data = f.read(chunk_size)
+        if not data:
+            break
+        response = requests.patch(upload_link, headers=headers, data=data)
+        upload_offset = int(response.headers.get('Upload-Offset', 0))
+        if upload_offset == os.path.getsize('my_file.mp4'):
+            print("Upload complete!")
+            break
+
+# Step 3: Verify the upload
+# Verify the completion of the upload by sending a HEAD request to the upload link. 
+# This request retrieves the current upload status, including the total length of the video and the offset indicating the progress.
+response = requests.head(upload_link, headers={'Tus-Resumable': '1.0.0', 'Accept': 'application/vnd.vimeo.*+json;version=3.4'})
+upload_length = int(response.headers.get('Upload-Length', 0))
+upload_offset = int(response.headers.get('Upload-Offset', 0))
+if upload_length == upload_offset:
+    print("Upload verified: Video file received completely.")
+else:
+    print("Upload verification failed: Video file upload incomplete.")
