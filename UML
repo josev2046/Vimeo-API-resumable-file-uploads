@@ -1,0 +1,33 @@
+@startuml
+
+actor User
+participant Script
+participant Library
+participant VimeoAPI
+
+User -> Script: Execute script
+activate Script
+
+Script -> Library: Get file
+activate Library
+Library --> Script: Filename 
+deactivate Library
+
+Script -> VimeoAPI: Create video
+activate VimeoAPI
+VimeoAPI --> Script: Video created
+deactivate VimeoAPI
+
+Script -> VimeoAPI: Upload video file in chunks
+activate VimeoAPI
+VimeoAPI --> Script: Video file (chunks) uploaded
+deactivate VimeoAPI
+
+Script -> VimeoAPI: Verify upload
+activate VimeoAPI
+VimeoAPI --> Script: Upload verified
+deactivate VimeoAPI
+
+Script -> User: Print upload status
+
+@enduml
