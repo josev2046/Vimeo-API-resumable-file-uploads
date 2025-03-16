@@ -23,3 +23,8 @@ For optimal performance, it's recommended to consider the chunk size when using 
 As we upload the video file from a local storage source, the client reads the file and transmits it to Vimeo's servers in chunks using the TUS protocol. These chunks are conveyed as PATCH requests, with the server tracking progress via the Upload-Offset header. This method facilitates upload resumption in case of interruptions or network issues, particularly advantageous for sizable files or unstable network connections.
 
 Finally, to validate upload completion, a HEAD request is dispatched to the upload.upload_link, incorporating headers specifying Tus-Resumable and Accept. The API responds with a HTTP 200 status code and headers revealing Upload-Length and Upload-Offset values. Comparison of these values determines whether the upload is complete: equality signifies successful receipt of the entire video file, while a larger Upload-Length than Upload-Offset denotes an ongoing upload.
+
+
+[![DOI](https://zenodo.org/badge/793978582.svg)](https://doi.org/10.5281/zenodo.15034988)
+
+
